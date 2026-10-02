@@ -62,7 +62,8 @@ CREATE TABLE IF NOT EXISTS t_flog_declare_row (
 CREATE TABLE IF NOT EXISTS t_flog_permit_bill (
   id bigint NOT NULL COMMENT '主键',
   bill_no varchar(64) DEFAULT NULL COMMENT '采伐许可证核签单号',
-  node_no int DEFAULT NULL COMMENT '当前所在级 0..3',
+  apply_id bigint DEFAULT NULL COMMENT '所绑申领建档卡（同一件，收件一关落第一笔时挂上）',
+  node_no int DEFAULT NULL COMMENT '当前所在级 0收件 1核地 2并排签 3用章',
   sign_mode int DEFAULT NULL COMMENT '同级核签办法 0任一人 1两名点齐',
   need_count int DEFAULT NULL COMMENT '本级应签人数',
   sign_count int DEFAULT NULL COMMENT '本级已签人数',
@@ -137,4 +138,52 @@ CREATE TABLE IF NOT EXISTS t_flog_yield_rule (
 INSERT IGNORE INTO t_flog_stand_doc (id, site_no, site_name, site_type, road_name, th1_max, th2_max, th3_max, status, del_flag, create_by, create_time)
 VALUES (0, 'DC00', '青屏县编制单位在册底档（青屏国有林场，在册）', '国有林场', '青屏省—青屏市—青屏县', 40.00, 120.00, 300.00, 0, 0, 'seed', NOW()),
        (1, 'DC01', '青屏县编制单位在册底档（白石集体林场，已收回）', '集体林场', '青屏省—青屏市—青屏县', 40.00, 120.00, 300.00, 1, 0, 'seed', NOW());
+
+-- 四关核签：名目一笔一行，同级已签人数由本表现算，件上不留代填枚数的格子。
+CREATE TABLE IF NOT EXISTS t_flog_sign_row (
+  id bigint NOT NULL COMMENT '主键',
+  bill_no varchar(64) DEFAULT NULL COMMENT '所属核签单号',
+  node_no int DEFAULT NULL COMMENT '名目所落级次 0收件 1核地 2并排签 3用章',
+  signer varchar(64) DEFAULT NULL COMMENT '落名目者（替人签的不落行）',
+  act_type int DEFAULT NULL COMMENT '落笔情形 0核签 1不予出证',
+  content varchar(255) DEFAULT NULL COMMENT '核签记事',
+  current_flag int DEFAULT NULL COMMENT '现行标记 1现行 0沉底(打回作废，不与后补的并列)',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='采伐许可证核签名目流水行';
+
+-- 核签结论一键转出的对外文本：各栏皆取自同一件，两处端出的数须一样粗。
+CREATE TABLE IF NOT EXISTS t_flog_permit_text (
+  id bigint NOT NULL COMMENT '主键',
+  permit_no varchar(64) DEFAULT NULL COMMENT '许可证文本号（与核签单同一件同一号）',
+  bill_no varchar(64) DEFAULT NULL COMMENT '所属核签单号',
+  apply_id bigint DEFAULT NULL COMMENT '所绑申领建档卡',
+  applicant_no varchar(64) DEFAULT NULL COMMENT '申请人底档字号（只信字号不信人）',
+  applicant_name varchar(128) DEFAULT NULL COMMENT '申请人全称',
+  subcomp_no varchar(64) DEFAULT NULL COMMENT '小班号',
+  cut_block_no varchar(64) DEFAULT NULL COMMENT '拟采地点(伐区名号)',
+  cut_mode int DEFAULT NULL COMMENT '采伐方式',
+  clear_trees int DEFAULT NULL COMMENT '皆伐株数',
+  qty decimal(12,2) DEFAULT NULL COMMENT '拟采蓄积(立方米)',
+  fine_amt decimal(12,2) DEFAULT NULL COMMENT '拟采面积(公顷)',
+  grade_level int DEFAULT NULL COMMENT '拟采强度取用顺位',
+  site_no varchar(64) DEFAULT NULL COMMENT '权属底档字号',
+  site_name varchar(128) DEFAULT NULL COMMENT '权属单位全称',
+  sign_trail varchar(500) DEFAULT NULL COMMENT '各级核签名目链（与当日屏上同一回计算）',
+  issue_year int DEFAULT NULL COMMENT '出证年（同一位申请人当年第二条当场止步）',
+  content varchar(255) DEFAULT NULL COMMENT '文本核验串（与申领卡同串）',
+  status int DEFAULT NULL COMMENT '文本情形 0已出证 1已作废',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='采伐许可证文本（核签结论一键转出）';
 

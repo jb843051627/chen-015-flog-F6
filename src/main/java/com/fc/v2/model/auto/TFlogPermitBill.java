@@ -36,9 +36,14 @@ public class TFlogPermitBill implements Serializable {
     @ApiModelProperty(value = "采伐许可证核签单号")
     private String billNo;
 
-    /** 当前所在级 0..3 */
+    /** 所绑申领建档卡（同一件，收件一关落第一笔时挂上） */
+    @TableField("apply_id")
+    @ApiModelProperty(value = "所绑申领建档卡")
+    private Long applyId;
+
+    /** 当前所在级 0收件 1核地 2并排签 3用章 */
     @TableField("node_no")
-    @ApiModelProperty(value = "当前所在级 0..3")
+    @ApiModelProperty(value = "当前所在级 0收件 1核地 2并排签 3用章")
     private Integer nodeNo;
 
     /** 同级核签办法 0任一人 1两名点齐 */
@@ -107,6 +112,14 @@ public class TFlogPermitBill implements Serializable {
 
     public void setBillNo(String billNo) {
         this.billNo = billNo;
+    }
+
+    public Long getApplyId() {
+        return applyId;
+    }
+
+    public void setApplyId(Long applyId) {
+        this.applyId = applyId;
     }
 
     public Integer getNodeNo() {
