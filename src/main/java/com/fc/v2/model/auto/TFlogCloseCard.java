@@ -36,6 +36,16 @@ public class TFlogCloseCard implements Serializable {
     @ApiModelProperty(value = "伐区勾销事务卡号")
     private String bizNo;
 
+    /** 压着事务卡的底档字号 */
+    @TableField("site_no")
+    @ApiModelProperty(value = "压着事务卡的底档字号")
+    private String siteNo;
+
+    /** 压着事务卡的小班号 */
+    @TableField("subcomp_no")
+    @ApiModelProperty(value = "压着事务卡的小班号")
+    private String subcompNo;
+
     /** 当前段次 0..3（报伐/核株/验更/了断） */
     @TableField("stage")
     @ApiModelProperty(value = "当前段次 0..3（报伐/核株/验更/了断）")
@@ -102,6 +112,22 @@ public class TFlogCloseCard implements Serializable {
 
     public void setBizNo(String bizNo) {
         this.bizNo = bizNo;
+    }
+
+    public String getSiteNo() {
+        return siteNo;
+    }
+
+    public void setSiteNo(String siteNo) {
+        this.siteNo = siteNo;
+    }
+
+    public String getSubcompNo() {
+        return subcompNo;
+    }
+
+    public void setSubcompNo(String subcompNo) {
+        this.subcompNo = subcompNo;
     }
 
     public Integer getStage() {

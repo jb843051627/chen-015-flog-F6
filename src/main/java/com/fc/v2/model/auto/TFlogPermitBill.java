@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -36,9 +37,90 @@ public class TFlogPermitBill implements Serializable {
     @ApiModelProperty(value = "采伐许可证核签单号")
     private String billNo;
 
-    /** 当前所在级 0..3 */
+    /** 申请人（现行采伐许可申领表） */
+    @TableField("applicant")
+    @ApiModelProperty(value = "申请人")
+    private String applicant;
+
+    /** 申领年度（同申请人当年只准一证） */
+    @TableField("apply_year")
+    @ApiModelProperty(value = "申领年度")
+    private Integer applyYear;
+
+    /** 底档字号（核地只信字号不信姓名） */
+    @TableField("site_no")
+    @ApiModelProperty(value = "底档字号")
+    private String siteNo;
+
+    /** 小班号 */
+    @TableField("subcomp_no")
+    @ApiModelProperty(value = "小班号")
+    private String subcompNo;
+
+    /** 权属（自留山/承包集体等） */
+    @TableField("owner_name")
+    @ApiModelProperty(value = "权属")
+    private String ownerName;
+
+    /** 拟采地点 */
+    @TableField("cut_place")
+    @ApiModelProperty(value = "拟采地点")
+    private String cutPlace;
+
+    /** 采伐方式 1皆伐 2渐伐 3择伐 4抚育采伐 5更新采伐 6低质低效林改造 */
+    @TableField("cut_mode")
+    @ApiModelProperty(value = "采伐方式")
+    private Integer cutMode;
+
+    /** 林种树种 */
+    @TableField("forest_kind")
+    @ApiModelProperty(value = "林种树种")
+    private String forestKind;
+
+    /** 拟采面积(公顷) */
+    @TableField("cut_area")
+    @ApiModelProperty(value = "拟采面积(公顷)")
+    private BigDecimal cutArea;
+
+    /** 拟采蓄积(立方米) */
+    @TableField("cut_qty")
+    @ApiModelProperty(value = "拟采蓄积(立方米)")
+    private BigDecimal cutQty;
+
+    /** 更新措施 */
+    @TableField("renew_measure")
+    @ApiModelProperty(value = "更新措施")
+    private String renewMeasure;
+
+    /** 伐区调查设计材料 0未附 1已附（超省级规定面积或蓄积须附） */
+    @TableField("survey_flag")
+    @ApiModelProperty(value = "伐区调查设计材料 0未附 1已附")
+    private Integer surveyFlag;
+
+    /** 拟发/已发许可证文本（核签结论一键转成，数同此一件） */
+    @TableField("permit_text")
+    @ApiModelProperty(value = "许可证文本")
+    private String permitText;
+
+    /** 发出去的许可证号（用章落印时填，落印即封死） */
+    @TableField("permit_no")
+    @ApiModelProperty(value = "许可证号")
+    private String permitNo;
+
+    /** 推进轮次（市局打回后重新累一轮，旧名目沉底不并列） */
+    @TableField("round_no")
+    @ApiModelProperty(value = "推进轮次")
+    private Integer roundNo;
+
+    /** 本站用章落印时刻 */
+    @TableField("seal_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @ApiModelProperty(value = "用章落印时刻")
+    private Date sealTime;
+
+    /** 当前所在关 0收件 1核地 2并排签 3用章 */
     @TableField("node_no")
-    @ApiModelProperty(value = "当前所在级 0..3")
+    @ApiModelProperty(value = "当前所在关 0收件 1核地 2并排签 3用章")
     private Integer nodeNo;
 
     /** 同级核签办法 0任一人 1两名点齐 */
@@ -51,14 +133,14 @@ public class TFlogPermitBill implements Serializable {
     @ApiModelProperty(value = "本级应签人数")
     private Integer needCount;
 
-    /** 本级已签人数 */
+    /** 本级已签人数（由流水实时同算，不留代填格） */
     @TableField("sign_count")
     @ApiModelProperty(value = "本级已签人数")
     private Integer signCount;
 
-    /** 报批情形 0在核 1已核讫 2已打回 */
+    /** 报批情形 0在核 1已用印发证 2不予出证 3市局打回重报 */
     @TableField("status")
-    @ApiModelProperty(value = "报批情形 0在核 1已核讫 2已打回")
+    @ApiModelProperty(value = "报批情形 0在核 1已用印发证 2不予出证 3市局打回重报")
     private Integer status;
 
     /** 删除标记 0正常 1删除 */
@@ -195,5 +277,133 @@ public class TFlogPermitBill implements Serializable {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getApplicant() {
+        return applicant;
+    }
+
+    public void setApplicant(String applicant) {
+        this.applicant = applicant;
+    }
+
+    public Integer getApplyYear() {
+        return applyYear;
+    }
+
+    public void setApplyYear(Integer applyYear) {
+        this.applyYear = applyYear;
+    }
+
+    public String getSiteNo() {
+        return siteNo;
+    }
+
+    public void setSiteNo(String siteNo) {
+        this.siteNo = siteNo;
+    }
+
+    public String getSubcompNo() {
+        return subcompNo;
+    }
+
+    public void setSubcompNo(String subcompNo) {
+        this.subcompNo = subcompNo;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    public String getCutPlace() {
+        return cutPlace;
+    }
+
+    public void setCutPlace(String cutPlace) {
+        this.cutPlace = cutPlace;
+    }
+
+    public Integer getCutMode() {
+        return cutMode;
+    }
+
+    public void setCutMode(Integer cutMode) {
+        this.cutMode = cutMode;
+    }
+
+    public String getForestKind() {
+        return forestKind;
+    }
+
+    public void setForestKind(String forestKind) {
+        this.forestKind = forestKind;
+    }
+
+    public BigDecimal getCutArea() {
+        return cutArea;
+    }
+
+    public void setCutArea(BigDecimal cutArea) {
+        this.cutArea = cutArea;
+    }
+
+    public BigDecimal getCutQty() {
+        return cutQty;
+    }
+
+    public void setCutQty(BigDecimal cutQty) {
+        this.cutQty = cutQty;
+    }
+
+    public String getRenewMeasure() {
+        return renewMeasure;
+    }
+
+    public void setRenewMeasure(String renewMeasure) {
+        this.renewMeasure = renewMeasure;
+    }
+
+    public Integer getSurveyFlag() {
+        return surveyFlag;
+    }
+
+    public void setSurveyFlag(Integer surveyFlag) {
+        this.surveyFlag = surveyFlag;
+    }
+
+    public String getPermitText() {
+        return permitText;
+    }
+
+    public void setPermitText(String permitText) {
+        this.permitText = permitText;
+    }
+
+    public String getPermitNo() {
+        return permitNo;
+    }
+
+    public void setPermitNo(String permitNo) {
+        this.permitNo = permitNo;
+    }
+
+    public Integer getRoundNo() {
+        return roundNo;
+    }
+
+    public void setRoundNo(Integer roundNo) {
+        this.roundNo = roundNo;
+    }
+
+    public Date getSealTime() {
+        return sealTime;
+    }
+
+    public void setSealTime(Date sealTime) {
+        this.sealTime = sealTime;
     }
 }

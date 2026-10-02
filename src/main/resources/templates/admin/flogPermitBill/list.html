@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('采伐许可证核签台账')"/>
+</head>
+<body class="pear-container">
+<div class="layui-card">
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">核签单号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="billNo" class="layui-input">
+                </div>
+                <label class="layui-form-label">申请人</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="applicant" class="layui-input">
+                </div>
+                <button class="pear-btn pear-btn-md pear-btn-primary" lay-submit lay-filter="permit-query">
+                    <i class="layui-icon layui-icon-search"></i>查询
+                </button>
+                <button type="reset" class="pear-btn pear-btn-md">
+                    <i class="layui-icon layui-icon-refresh"></i>重置
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="layui-card">
+    <div class="layui-card-body">
+        <table id="permit-table" lay-filter="permit-table"></table>
+    </div>
+</div>
+
+<script type="text/html" id="permit-toolbar">
+    <button shiro:hasPermission="flogPermitBill:receive" class="pear-btn pear-btn-primary pear-btn-md" lay-event="receive">
+        <i class="layui-icon layui-icon-add-1"></i>收件（现行采伐许可申领表）
+    </button>
+</script>
+
+<script type="text/html" id="permit-node">
+    {{# if(d.nodeNo===0){ }}<span class="layui-badge layui-bg-gray">收件</span>
+    {{# }else if(d.nodeNo===1){ }}<span class="layui-badge layui-bg-blue">核地</span>
+    {{# }else if(d.nodeNo===2){ }}<span class="layui-badge layui-bg-orange">并排签</span>
+    {{# }else if(d.nodeNo===3){ }}<span class="layui-badge">用章</span>{{# } }}
+</script>
+
+<script type="text/html" id="permit-status">
+    {{# if(d.status===0){ }}<span class="layui-badge layui-bg-blue">在核</span>
+    {{# }else if(d.status===1){ }}<span class="layui-badge">已用印发证</span>
+    {{# }else if(d.status===2){ }}<span class="layui-badge layui-bg-gray">不予出证</span>
+    {{# }else if(d.status===3){ }}<span class="layui-badge layui-bg-orange">市局打回重报</span>{{# } }}
+</script>
+
+<script type="text/html" id="permit-bar">
+    <button class="pear-btn pear-btn-warming pear-btn-sm" lay-event="ledger" title="核签台账（逐级名目）"><i class="layui-icon layui-icon-template"></i></button>
+    <button shiro:hasPermission="flogPermitBill:approve" class="pear-btn pear-btn-primary pear-btn-sm" lay-event="approve" title="签批（只签当下所在关）">签</button>
+    <button shiro:hasPermission="flogPermitBill:approve" class="pear-btn pear-btn-danger pear-btn-sm" lay-event="refuse" title="不予出证">否</button>
+    <button shiro:hasPermission="flogPermitBill:sendBack" class="pear-btn pear-btn-normal pear-btn-sm" lay-event="sendBack" title="市局打回">回</button>
+    <button class="pear-btn pear-btn-sm" lay-event="permitText" title="许可证文本（一键转）">证</button>
+</script>
+
+<!-- 收件：现行采伐许可申领表那几样，不另做一张表 -->
+<script type="text/html" id="receive-form">
+    <form class="layui-form" style="padding:18px 20px 0 0" id="receive-lay-form">
+        <div class="layui-form-item"><label class="layui-form-label">申请人*</label>
+            <div class="layui-input-block"><input name="applicant" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">底档字号*</label>
+            <div class="layui-input-inline"><input name="siteNo" required class="layui-input"></div>
+            <label class="layui-form-label">小班号*</label>
+            <div class="layui-input-inline"><input name="subcompNo" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">权属*</label>
+            <div class="layui-input-block"><input name="ownerName" placeholder="自留山/承包集体等" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">拟采地点*</label>
+            <div class="layui-input-block"><input name="cutPlace" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">采伐方式*</label>
+            <div class="layui-input-block">
+                <select name="cutMode" required>
+                    <option value="1">皆伐</option><option value="2">渐伐</option><option value="3">择伐</option>
+                    <option value="4">抚育采伐</option><option value="5">更新采伐</option><option value="6">低质低效林改造</option>
+                </select>
+            </div></div>
+        <div class="layui-form-item"><label class="layui-form-label">林种树种*</label>
+            <div class="layui-input-block"><input name="forestKind" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">面积(公顷)*</label>
+            <div class="layui-input-inline"><input name="cutArea" required class="layui-input"></div>
+            <label class="layui-form-label">蓄积(立方米)*</label>
+            <div class="layui-input-inline"><input name="cutQty" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">更新措施*</label>
+            <div class="layui-input-block"><input name="renewMeasure" required class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">调查设计材料</label>
+            <div class="layui-input-inline" style="line-height:38px">
+                <input type="checkbox" name="surveyFlag" lay-skin="switch" lay-text="已附|未附" value="1">
+                <span class="layui-word-aux">超省级规定面积或蓄积须附</span>
+            </div></div>
+        <div class="layui-form-item"><label class="layui-form-label">备注</label>
+            <div class="layui-input-block"><input name="comment" class="layui-input"></div></div>
+        <div class="layui-form-item" style="text-align:center">
+            <button class="pear-btn pear-btn-primary" lay-submit lay-filter="receive-submit">收件</button>
+        </div>
+    </form>
+</script>
+
+<th:block th:include="include :: footer"/>
+<script>
+    layui.use(['table', 'form', 'jquery', 'layer'], function () {
+        let table = layui.table, form = layui.form, $ = layui.jquery, layer = layui.layer;
+        let MODULE_PATH = rootPath + "/flogPermitBill/";
+        let NODE_NAMES = ['收件', '核地', '并排签', '用章'];
+        let STATUS_NAMES = ['在核', '已用印发证', '不予出证', '市局打回重报'];
+        let RESULT_NAME = {1: '通过', 2: '不予出证', 3: '市局打回'};
+        let ROLE_NAME = {1: '分管·蓄积强度', 2: '分管·权属文本'};
+
+        table.render({
+            elem: '#permit-table',
+            url: MODULE_PATH + 'list',
+            page: true, method: 'get', skin: 'line',
+            toolbar: '#permit-toolbar',
+            defaultToolbar: ['refresh', 'filter', 'print', 'exports'],
+            cols: [[
+                {title: 'ID', field: 'id', align: 'center', hide: true},
+                {title: '核签单号', field: 'billNo', align: 'center', width: 140},
+                {title: '申请人', field: 'applicant', align: 'center', width: 100},
+                {title: '年度', field: 'applyYear', align: 'center', width: 70},
+                {title: '字号', field: 'siteNo', align: 'center', width: 80},
+                {title: '小班号', field: 'subcompNo', align: 'center', width: 90},
+                {title: '地点', field: 'cutPlace', align: 'left'},
+                {title: '面积', field: 'cutArea', align: 'center', width: 80},
+                {title: '蓄积', field: 'cutQty', align: 'center', width: 80},
+                {title: '轮次', field: 'roundNo', align: 'center', width: 60},
+                {title: '当下所在关', field: 'nodeNo', align: 'center', width: 100, toolbar: '#permit-node'},
+                // 已到/还缺手数照服务回应摆，本页没有任何可代填枚数的格子
+                {title: '已到手', field: 'signCount', align: 'center', width: 80},
+                {title: '情形', field: 'status', align: 'center', width: 120, toolbar: '#permit-status'},
+                {title: '许可证号', field: 'permitNo', align: 'center', width: 170},
+                {title: '操作', toolbar: '#permit-bar', align: 'center', width: 150}
+            ]]
+        });
+
+        form.on('submit(permit-query)', function (data) {
+            table.reload('permit-table', {where: data.field});
+            return false;
+        });
+
+        table.on('toolbar(permit-table)', function (obj) {
+            if (obj.event === 'receive') { openReceive(); }
+        });
+
+        table.on('tool(permit-table)', function (obj) {
+            if (obj.event === 'ledger') { openLedger(obj.data.id); }
+            else if (obj.event === 'approve') { openApprove(obj); }
+            else if (obj.event === 'refuse') { openRefuse(obj); }
+            else if (obj.event === 'sendBack') { openSendBack(obj); }
+            else if (obj.event === 'permitText') { openPermitText(obj.data.id); }
+        });
+
+        function openReceive() {
+            layer.open({
+                type: 1, title: '收件·现行采伐许可申领表', area: ['680px', '600px'],
+                content: $($('#receive-form').html()),
+                success: function () { form.render(null, 'receive-lay-form'); }
+            });
+            form.on('submit(receive-submit)', function (data) {
+                // 开关未勾选时不提交 surveyFlag；勾选时补成 1
+                let f = data.field;
+                if (f.surveyFlag === 'on') { f.surveyFlag = 1; }
+                $.post(MODULE_PATH + 'receive', f, function (res) {
+                    if (res.code === 200) { layer.closeAll(); layer.msg('已收件，件摆到核地关', {icon: 1}); table.reload('permit-table'); }
+                    else { layer.msg(res.msg, {icon: 2}); }
+                });
+                return false;
+            });
+        }
+
+        function openApprove(obj) {
+            let d = obj.data;
+            if (d.status === 1) { layer.msg('已用印发证，各栏封死，要动只能另起一件', {icon: 2}); return; }
+            if (d.status === 2) { layer.msg('已不予出证，件到这儿为止', {icon: 2}); return; }
+            let roleHtml = d.nodeNo === 2
+                ? '<select id="sign-role" class="layui-input"><option value="1">分管·蓄积/强度顺位</option><option value="2">分管·权属/更新/拟发文本</option></select>'
+                : '<div class="layui-form-mid">本关单人签批</div>';
+            layer.open({
+                type: 1, title: '签批·' + NODE_NAMES[d.nodeNo] + '关（只签件当下所在关）', area: ['460px', '280px'],
+                content: '<div style="padding:20px"><div class="layui-form-item"><label class="layui-form-label">分管口</label><div class="layui-input-block">' + roleHtml + '</div></div>'
+                    + '<div class="layui-form-item"><label class="layui-form-label">意见</label><div class="layui-input-block"><textarea id="sign-opinion" class="layui-textarea"></textarea></div></div>'
+                    + '<div style="text-align:center"><button class="pear-btn pear-btn-primary" id="sign-ok">签批落名</button></div></div>',
+                success: function () {
+                    $('#sign-ok').on('click', function () {
+                        $.post(MODULE_PATH + 'approve', {
+                            id: d.id, signRole: d.nodeNo === 2 ? $('#sign-role').val() : null,
+                            comment: $('#sign-opinion').val()
+                        }, function (res) {
+                            if (res.code === 200) { layer.closeAll(); layer.msg('已落名', {icon: 1}); table.reload('permit-table'); }
+                            else { layer.msg(res.msg, {icon: 2}); }
+                        });
+                    });
+                }
+            });
+        }
+
+        function openRefuse(obj) {
+            let d = obj.data;
+            layer.prompt({title: '不予出证意见（件到这儿为止，过后不追一枚）', formType: 2}, function (opinion) {
+                $.post(MODULE_PATH + 'refuse', {
+                    id: d.id, signRole: d.nodeNo === 2 ? 1 : null, comment: opinion
+                }, function (res) {
+                    if (res.code === 200) { layer.closeAll(); layer.msg('已记下不予出证', {icon: 1}); table.reload('permit-table'); }
+                    else { layer.msg(res.msg, {icon: 2}); }
+                });
+            });
+        }
+
+        function openSendBack(obj) {
+            if (obj.data.status !== 1) { layer.msg('只有已用印报市局的件打得回', {icon: 2}); return; }
+            layer.prompt({title: '市局打回意见（先前名目沉底，从核地重新累）', formType: 2}, function (opinion) {
+                $.post(MODULE_PATH + 'sendBack', {id: obj.data.id, comment: opinion}, function (res) {
+                    if (res.code === 200) { layer.closeAll(); layer.msg('已打回，从核地重累', {icon: 1}); table.reload('permit-table'); }
+                    else { layer.msg(res.msg, {icon: 2}); }
+                });
+            });
+        }
+
+        function openPermitText(id) {
+            $.get(MODULE_PATH + 'permitText', {id: id}, function (res) {
+                if (res.code === 200) {
+                    layer.open({type: 1, title: '林木采伐许可证（核签结论一键转成，同一件同源）', area: ['560px', '460px'],
+                        content: '<pre style="padding:20px;white-space:pre-wrap;font-size:14px">' + escapeHtml(res.data) + '</pre>'});
+                } else { layer.msg(res.msg, {icon: 2}); }
+            });
+        }
+
+        // 逐级回捋：四关名目一级一级摆，沉底旧轮另列，与当日那一屏对得上号
+        function openLedger(id) {
+            $.get(MODULE_PATH + 'ledger', {id: id}, function (res) {
+                if (res.code !== 200) { layer.msg(res.msg, {icon: 2}); return; }
+                let v = res.data, html = '<div style="padding:18px;max-height:640px;overflow:auto">';
+                html += '<fieldset class="layui-elem-field"><legend>当下</legend>'
+                    + '所在关：<b>' + v.currentNodeName + '</b>　情形：<b>' + v.statusName + '</b><br>'
+                    + '本关应到 <b>' + v.needCount + '</b> 双手，已到 <b>' + v.signCount + '</b> 双，还缺 <b style="color:#FF5722">' + v.lackCount + '</b> 双'
+                    + (v.blockReason ? '<br>卡件缘由：<span style="color:#FF5722">' + escapeHtml(v.blockReason) + '</span>' : '')
+                    + '</fieldset>';
+                v.nodes.forEach(function (n) {
+                    html += '<fieldset class="layui-elem-field"><legend>' + n.nodeName + '（应到 ' + n.needCount + ' / 已到 ' + n.signCount + '）</legend>';
+                    if (!n.signs.length) { html += '<span style="color:#999">尚无落名</span>'; }
+                    n.signs.forEach(function (s) {
+                        html += '<div style="line-height:26px">· ' + escapeHtml(s.signer)
+                            + (s.signRole ? '（' + ROLE_NAME[s.signRole] + '）' : '')
+                            + '　' + RESULT_NAME[s.signResult]
+                            + (s.opinion ? '　' + escapeHtml(s.opinion) : '')
+                            + (s.signTime ? '　<span style="color:#999">' + s.signTime + '</span>' : '') + '</div>';
+                    });
+                    html += '</fieldset>';
+                });
+                if (v.sunkRounds && v.sunkRounds.length) {
+                    html += '<fieldset class="layui-elem-field" style="border-style:dashed"><legend>沉底旧轮（作废名目，不与当轮并列）</legend>';
+                    v.sunkRounds.forEach(function (r) {
+                        html += '<div>第 ' + r.roundNo + ' 轮'
+                            + (r.rejecter ? '，市局打回：' + escapeHtml(r.rejecter) + ' ' + escapeHtml(r.opinion || '') : '') + '</div>';
+                        r.signs.forEach(function (s) {
+                            html += '<div style="color:#999">· ' + escapeHtml(s.signer) + '　' + RESULT_NAME[s.signResult] + '</div>';
+                        });
+                    });
+                    html += '</fieldset>';
+                }
+                html += '</div>';
+                layer.open({type: 1, title: '核签台账·逐级名目回捋（单号 ' + escapeHtml(v.bill.billNo || '') + '）', area: ['720px', '720px'], content: html});
+            });
+        }
+
+        function escapeHtml(s) {
+            return $('<div/>').text(s == null ? '' : s).html();
+        }
+    });
+</script>
+</body>
+</html>

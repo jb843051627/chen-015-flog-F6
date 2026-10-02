@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS t_flog_apply_card (
 CREATE TABLE IF NOT EXISTS t_flog_close_card (
   id bigint NOT NULL COMMENT '主键',
   biz_no varchar(64) DEFAULT NULL COMMENT '伐区勾销事务卡号',
+  site_no varchar(64) DEFAULT NULL COMMENT '压着事务卡的底档字号',
+  subcomp_no varchar(64) DEFAULT NULL COMMENT '压着事务卡的小班号',
   stage int DEFAULT NULL COMMENT '当前段次 0..3（报伐/核株/验更/了断）',
   status int DEFAULT NULL COMMENT '卡的落定 0未起 1在办 2已了断',
   content varchar(255) DEFAULT NULL COMMENT '勾销记事',
@@ -62,19 +64,58 @@ CREATE TABLE IF NOT EXISTS t_flog_declare_row (
 CREATE TABLE IF NOT EXISTS t_flog_permit_bill (
   id bigint NOT NULL COMMENT '主键',
   bill_no varchar(64) DEFAULT NULL COMMENT '采伐许可证核签单号',
-  node_no int DEFAULT NULL COMMENT '当前所在级 0..3',
+  applicant varchar(64) DEFAULT NULL COMMENT '申请人（现行采伐许可申领表）',
+  apply_year int DEFAULT NULL COMMENT '申领年度（同申请人当年只准一证）',
+  site_no varchar(64) DEFAULT NULL COMMENT '底档字号（核地只信字号不信姓名）',
+  subcomp_no varchar(64) DEFAULT NULL COMMENT '小班号',
+  owner_name varchar(128) DEFAULT NULL COMMENT '权属（自留山/承包集体等）',
+  cut_place varchar(255) DEFAULT NULL COMMENT '拟采地点',
+  cut_mode int DEFAULT NULL COMMENT '采伐方式 1皆伐 2渐伐 3择伐 4抚育采伐 5更新采伐 6低质低效林改造',
+  forest_kind varchar(128) DEFAULT NULL COMMENT '林种树种',
+  cut_area decimal(12,2) DEFAULT NULL COMMENT '拟采面积(公顷)',
+  cut_qty decimal(12,2) DEFAULT NULL COMMENT '拟采蓄积(立方米)',
+  renew_measure varchar(255) DEFAULT NULL COMMENT '更新措施',
+  survey_flag int DEFAULT '0' COMMENT '伐区调查设计材料 0未附 1已附（超省级规定面积或蓄积须附）',
+  permit_text varchar(1000) DEFAULT NULL COMMENT '拟发/已发许可证文本（核签结论一键转成，数同此一件）',
+  permit_no varchar(64) DEFAULT NULL COMMENT '发出去的许可证号（用章落印时填，落印即封死）',
+  round_no int DEFAULT '1' COMMENT '推进轮次（市局打回后重新累一轮，旧名目沉底不并列）',
+  seal_time datetime DEFAULT NULL COMMENT '本站用章落印时刻',
+  node_no int DEFAULT NULL COMMENT '当前所在关 0收件 1核地 2并排签 3用章',
   sign_mode int DEFAULT NULL COMMENT '同级核签办法 0任一人 1两名点齐',
   need_count int DEFAULT NULL COMMENT '本级应签人数',
-  sign_count int DEFAULT NULL COMMENT '本级已签人数',
-  status int DEFAULT NULL COMMENT '报批情形 0在核 1已核讫 2已打回',
+  sign_count int DEFAULT NULL COMMENT '本级已签人数（由流水实时同算，不留代填格）',
+  status int DEFAULT NULL COMMENT '报批情形 0在核 1已用印发证 2不予出证 3市局打回重报',
   del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
   create_by varchar(64) DEFAULT NULL COMMENT '创建者',
   create_time datetime DEFAULT NULL COMMENT '创建时间',
   update_by varchar(64) DEFAULT NULL COMMENT '更新者',
   update_time datetime DEFAULT NULL COMMENT '更新时间',
   remark varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='采伐许可证逐级核签单';
+  PRIMARY KEY (id),
+  KEY idx_flog_permit_applicant_year (applicant, apply_year, status, del_flag),
+  KEY idx_flog_permit_site_sub (site_no, subcomp_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='采伐许可证逐级核签单（现行采伐许可申领表字段同源）';
+
+-- 核签签批流水：每一关每一名落一笔，掐同一分钟也是两笔；市局打回即旧轮次沉底，只摆当轮。
+-- 手数（sign_count）由当轮本表 distinct 落名人 count 得出，库内不另存可代填的枚数格。
+CREATE TABLE IF NOT EXISTS t_flog_permit_sign (
+  id bigint NOT NULL COMMENT '主键',
+  bill_id bigint NOT NULL COMMENT '核签单主键',
+  round_no int NOT NULL COMMENT '所属推进轮次（打回后旧轮沉底）',
+  node_no int NOT NULL COMMENT '落名关 0收件 1核地 2并排签 3用章',
+  sign_role int DEFAULT NULL COMMENT '并排签分管口 1蓄积强度 2权属文本',
+  signer varchar(64) NOT NULL COMMENT '落名人（本人签名，替签一律当没签）',
+  sign_result int NOT NULL COMMENT '名目 1通过 2不予出证 3市局打回',
+  opinion varchar(500) DEFAULT NULL COMMENT '意见',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间（流水时刻，逐笔累）',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id),
+  KEY idx_flog_sign_bill_round (bill_id, round_no, node_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='采伐许可证核签签批流水（逐关逐名留痕）';
 
 CREATE TABLE IF NOT EXISTS t_flog_quota_task (
   id bigint NOT NULL COMMENT '主键',
